@@ -28,16 +28,18 @@ def update_quest(quest: str) -> str:
 
 
 def update_quest_file(quest_file: Path) -> None:
-    with open(quest_file, 'w') as fin:
+    with open(quest_file, 'r+') as fin:
         raw_text = fin.read()
-        if raw_text.find('title') == -1 and raw_text.find('text') == -1:
+        if raw_text.find('title') == -1 or raw_text.find('text') == -1:
+            print(f'No text or title found in {quest_file}')
             print(raw_text)
         else:
+            print(f'Translating {quest_file}')
             fin.write(update_quest(raw_text))
 
 
 def main():
-    quest_path = Path("chapters-eng")
+    quest_path = Path("chapters")
     for quest_file in quest_path.rglob("*.snbt"):
         update_quest_file(quest_file=quest_file)
 
