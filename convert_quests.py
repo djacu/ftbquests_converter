@@ -56,23 +56,33 @@ def update_quest(quest: str) -> str:
     return quest
 
 
-def update_quest_file(quest_file: Path) -> None:
-    with open(quest_file, 'r+') as fin:
+def update_quest_file(input_path: Path, output_path: Path) -> None:
+    with open(input_path, 'r') as fin:
         raw_text = fin.read()
         if raw_text.find('title') == -1 or raw_text.find('text') == -1:
-            print(f'No text or title found in {quest_file}')
+            print(f'No text or title found in {input_path}')
             print(raw_text)
+            new_text = raw_text
         else:
-            print(f'Translating {quest_file}')
-            fin.seek(0)
-            fin.truncate()
-            fin.write(update_quest(raw_text))
+            print(f'Translating {input_path}')
+            new_text = update_quest(raw_text)
+
+    with open(output_path, 'w') as fout:
+        fout.write(new_text)
+
+def make_output_path(path: Path) -> Path:
+    parts = list(path.parts)
+    parts[0] = parts[0] + "-trans"
+    output_path = Path(*parts)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    return output_path
 
 
 def main():
-    quest_path = Path("chapters")
-    for quest_file in quest_path.rglob("*.snbt"):
-        update_quest_file(quest_file=quest_file)
+    quest_path = Path("./chapters")
+    for input_path in quest_path.rglob("*.snbt"):
+        output_path = make_output_path(input_path)
+        update_quest_file(input_path, output_path)
 
 
 if __name__ == '__main__':
