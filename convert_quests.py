@@ -16,7 +16,36 @@ def get_title_and_text(quest: str) -> Tuple[str, List[str]]:
 
 
 def translate_line(line: str) -> str:
-    return translator.translate(line, src='ja', dest='en').text
+    try:
+        return translator.translate(line, src='ja', dest='en').text
+    except IndexError:
+        '''
+        If googletrans gets a bad line of text like a url it will throw
+        an error like:
+            File .../googletrans/client.py", line 222, in translate
+            translated_parts = list(map(
+                lambda part: TranslatedPart(part[0], part[1] if len(part) >= 2 else []),
+                parsed[1][0][0][5]))
+            IndexError: list index out of range
+        '''
+        return line
+    except AttributeError:
+        '''
+        googletrans 4.0.0.rc1 has a bug
+        https://github.com/ssut/py-googletrans/issues/350
+
+        can possibly be fixed just by re-calling the function
+        '''
+        return translate_line(line)
+    except KeyError:
+        '''
+        Don't know why but this happened.
+        Traceback (most recent call last):
+        File ".../h2/connection.py", line 224, in process_input
+        func, target_state = self._transitions[(self.state, input_)]
+        KeyError: (<ConnectionState.CLOSED: 3>, <ConnectionInputs.RECV_PING: 14>)
+        '''
+        return translate_line(line)
 
 
 def update_quest(quest: str) -> str:
@@ -35,6 +64,8 @@ def update_quest_file(quest_file: Path) -> None:
             print(raw_text)
         else:
             print(f'Translating {quest_file}')
+            fin.seek(0)
+            fin.truncate()
             fin.write(update_quest(raw_text))
 
 
@@ -46,3 +77,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
